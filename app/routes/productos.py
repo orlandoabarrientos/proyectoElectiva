@@ -1,11 +1,19 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from app.config import conectar_bd
-import mysql.connector
+from app.config import obtener_db
+import mysql.connector as mysql
+import os
+import glob
 
 router = APIRouter()
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  
+UPLOADS_PATH = os.path.join(BASE_DIR, "uploads", "images")  
+DEFAULT_IMG = "/uploads/images/DEFAULT.png"
+IMG_EXTENSIONS = ["jpg", "jpeg", "png", "webp"]  
+
 class Producto(BaseModel):
+    codigo: str 
     nombre: str
     descripcion: str
     cantidad: int
@@ -13,49 +21,51 @@ class Producto(BaseModel):
     impuesto: float
 
 @router.post("/productos_post")
-def crear_producto(producto: Producto):
-    conexion = conectar_bd()
-    cursor = conexion.cursor()
+def crear_producto(producto: Producto, db=Depends(obtener_db)):
+ 
+    cursor = db.cursor()
 
     try:
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS productos (
-                codigo INT AUTO_INCREMENT PRIMARY KEY,
-                nombre VARCHAR(50) NOT NULL,
-                descripcion TEXT NOT NULL,
-                cantidad INT NOT NULL,
-                precio DECIMAL(10, 2) NOT NULL,
-                impuesto DECIMAL(10, 2) NOT NULL
-            )
-        """)
+        query = "INSERT INTO productos (codigo, nombre, descripcion, cantidad, precio, impuesto) VALUES (%s, %s, %s, %s, %s, %s)"
+        cursor.execute(query, (producto.codigo, producto.nombre, producto.descripcion, producto.cantidad, producto.precio, producto.impuesto))
 
-        query = "INSERT INTO productos (nombre, descripcion, cantidad, precio, impuesto) VALUES (%s, %s, %s, %s, %s)"
-        cursor.execute(query, (producto.nombre, producto.descripcion, producto.cantidad, producto.precio, producto.impuesto))
-
-        conexion.commit()
+        db.commit()
         return {"mensaje": "Producto creado"}
 
-    except mysql.connector.Error as err:
-        conexion.rollback()
+    except mysql.dbector.Error as err:
+        db.rollback()
         raise HTTPException(status_code=500, detail=f"Error en la consulta: {err}")
 
     finally:
         cursor.close()
-        conexion.close()
+        db.close()
 
 @router.get("/productos_get")
-def obtener_productos():
-    conexion = conectar_bd()
-    cursor = conexion.cursor(dictionary=True)
+def obtener_productos(db=Depends(obtener_db)):
+    cursor = db.cursor(dictionary=True)
 
     try:
         cursor.execute("SELECT * FROM productos")
         productos = cursor.fetchall()
+
+        for producto in productos:
+            codigo = str(producto["codigo"]).strip()  
+
+            imagen_path = None
+            if codigo:  
+                posibles_imagenes = glob.glob(os.path.join(UPLOADS_PATH, f"{codigo}.*"))  
+                if posibles_imagenes:
+                    imagen_path = posibles_imagenes[0] 
+                    imagen_path = os.path.relpath(imagen_path, BASE_DIR)  
+                    imagen_path = imagen_path.replace("\\", "/")  
+
+            producto["imagen_url"] = f"/{imagen_path}" if imagen_path else DEFAULT_IMG
+
         return productos
 
-    except mysql.connector.Error as err:
+    except mysql.dbector.Error as err:
         raise HTTPException(status_code=500, detail=f"Error en la consulta: {err}")
 
     finally:
         cursor.close()
-        conexion.close()
+        db.close()

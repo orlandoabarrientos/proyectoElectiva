@@ -1,7 +1,8 @@
 // usar < flutter pub get > para cargar los paquetes
 import 'package:flutter/material.dart';
-import './pantalla01.dart';
-import 'drawer.dart';
+import 'getproducto.dart';
+import 'sidebar.dart';
+import 'navigationbar.dart';
 
 class Home extends StatelessWidget {
   const Home({super.key});
@@ -30,13 +31,17 @@ class MyHomePage extends StatefulWidget {
 
 class _HomeState extends State<MyHomePage> {
   //variables
-  
+
   @override
   Widget build(BuildContext context) {
     DateTime now = DateTime.now();
 
     // Formatea la fecha y hora
     return Scaffold(
+      bottomNavigationBar: BarraNavegacion(
+        selectedIndex: 0,
+        onItemTapped: (index) {},
+      ),
       drawer: const MenuLateral(),
       appBar: AppBar(
         backgroundColor: Theme.of(context).primaryColorLight,
@@ -60,20 +65,14 @@ class _HomeState extends State<MyHomePage> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                Text(
-                    now.toString()
-                ),
-                const Text(
-                  'Integrantes : Osman Cordero, '
-                  'Orlando Barrientos, '
-                  'Jhon Blanco, '
-                  'Fabiola Cordero, '
-                  'Maria Gutierrz, '
-                  'Emanuel Rivero, '
-                  'Edith Escalona,'
-                  
-                  
-                ),
+                Text(now.toString()),
+                const Text('Integrantes : Osman Cordero, '
+                    'Orlando Barrientos, '
+                    'Jhon Blanco, '
+                    'Fabiola Cordero, '
+                    'Maria Gutierrz, '
+                    'Emanuel Rivero, '
+                    'Edith Escalona,'),
                 const SizedBox(
                   height: 20,
                 ),
@@ -82,20 +81,12 @@ class _HomeState extends State<MyHomePage> {
                       Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const Pantalla01()));
+                              builder: (context) => const getproducto()));
                     },
                     child: const Text('Entrar')),
                 const SizedBox(
                   height: 20,
                 ),
-                ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const Pantalla01()));
-                    },
-                    child: const Text('Salir')),
               ]),
         ],
       ),

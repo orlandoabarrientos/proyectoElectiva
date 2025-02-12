@@ -90,6 +90,17 @@ class _getproductoState extends State<getproducto> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // Mostrar la imagen del producto
+                          Image.network(
+                            product.imagen_url,
+                            height: 300, // Ajusta el tamaño según necesites
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Icon(Icons.image_not_supported,
+                                  size: 50);
+                            },
+                          ),
                           Text(
                             product.nombre,
                             style: const TextStyle(
@@ -250,6 +261,7 @@ class Producto {
   final int cantidad;
   final double precio;
   final double impuesto;
+  final String imagen_url;
 
   Producto({
     required this.codigo,
@@ -258,6 +270,7 @@ class Producto {
     required this.cantidad,
     required this.precio,
     required this.impuesto,
+    required this.imagen_url,
   });
 
   factory Producto.fromJson(Map<String, dynamic> json) {
@@ -268,6 +281,7 @@ class Producto {
       cantidad: json['cantidad'],
       precio: json['precio'].toDouble(),
       impuesto: json['impuesto'].toDouble(),
+      imagen_url: "http://10.0.2.2:8000${json['imagen_url']}",
     );
   }
 }

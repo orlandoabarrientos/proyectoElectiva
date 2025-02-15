@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
+from typing import Optional
 from app.config import obtener_db
 import mysql.connector as mysql
 import os
@@ -13,13 +14,13 @@ UPLOADS_PATH = os.path.join(BASE_DIR, "uploads", "images")
 IMG_EXTENSIONS = ["jpg", "jpeg", "png", "webp"]  
 
 class Producto(BaseModel):
-    codigo: str 
-    nombre: str
-    descripcion: str
-    cantidad: int
-    precio: float
-    impuesto: float
-
+    codigo: str
+    nombre: Optional[str] = None
+    descripcion: Optional[str] = None
+    cantidad: Optional[int] = None
+    precio: Optional[float] = None
+    impuesto: Optional[float] = None
+     
 @router.post("/productos_post")
 def crear_producto(producto: Producto, db=Depends(obtener_db)):
  
@@ -32,7 +33,26 @@ def crear_producto(producto: Producto, db=Depends(obtener_db)):
         db.commit()
         return {"mensaje": "Producto creado"}
 
-    except mysql.dbector.Error as err:
+    except mysql.connector.Error as err:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error en la consulta: {err}")
+
+    finally:
+        cursor.close()
+        db.close()
+        
+@router.post("/productos_eliminar")
+def eliminar_products(producto: Producto, db=Depends(obtener_db)):
+    cursor = db.cursor()
+
+    try:
+        query = "DELETE FROM productos WHERE codigo = %s"
+        cursor.execute(query, (producto.codigo,))
+        
+        db.commit()
+        return {"mensaje": "Producto eliminado"}
+
+    except mysql.connector.Error as err:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error en la consulta: {err}")
 
@@ -64,9 +84,29 @@ def obtener_productos(db=Depends(obtener_db)):
 
         return productos
 
-    except mysql.dbector.Error as err:
+    except mysql.connector.Error as err:
         raise HTTPException(status_code=500, detail=f"Error en la consulta: {err}")
 
     finally:
         cursor.close()
         db.close()
+
+@router.post("/productos_actualizar")
+def actualizar_producto(producto: Producto, db=Depends(obtener_db)):
+    cursor = db.cursor()
+
+    try:
+        query = "UPDATE productos SET nombre = %s, descripcion = %s, cantidad = %s, precio = %s, impuesto = %s WHERE codigo = %s"
+        cursor.execute(query, (producto.nombre, producto.descripcion, producto.cantidad, producto.precio, producto.impuesto, producto.codigo))
+
+        db.commit()
+        return {"mensaje": "Producto actualizado"}
+
+    except mysql.connector.Error as err:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error en la consulta: {err}")
+
+    finally:
+        cursor.close()
+        db.close()
+        

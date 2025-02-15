@@ -13,7 +13,6 @@ class Home extends StatelessWidget {
       title: 'Electiva I',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-            // ignore: prefer_const_constructors
             seedColor: Color.fromARGB(255, 0, 193, 241)),
         useMaterial3: true,
       ),

@@ -18,14 +18,13 @@ class MenuLateral extends StatelessWidget {
                 fit: BoxFit.scaleDown,
               ),
             ),
-            child: Text('') //BoxDecoration //UserAccountDrawerHeader
-            ), //DrawerHeader
+            child: Text('') 
+            ), 
         ListTile(
           leading: const Icon(Icons.person),
           title: const Text(' Bienvenido '),
           onTap: () {
-            // Navigator.pop(context);
-            //Navigator.pushNamed(context, './home');
+           
             Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
           },
         ),

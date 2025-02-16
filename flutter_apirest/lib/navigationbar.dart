@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_apirest/home.dart';
-import 'getproducto.dart';
+import 'productolist.dart';
 
 class BarraNavegacion extends StatelessWidget {
   final int selectedIndex;

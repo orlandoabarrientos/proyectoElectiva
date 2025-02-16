@@ -1,6 +1,6 @@
 // usar < flutter pub get > para cargar los paquetes
 import 'package:flutter/material.dart';
-import 'getproducto.dart';
+import 'productolist.dart';
 import 'sidebar.dart';
 import 'navigationbar.dart';
 

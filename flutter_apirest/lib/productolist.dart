@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'sidebar.dart';
 import 'navigationbar.dart';
+import 'productopost.dart';
 
 class getproducto extends StatefulWidget {
   const getproducto({super.key});
@@ -57,6 +58,15 @@ class _getproductoState extends State<getproducto> {
         title: const Text('Listado de Productos'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ProductoPost()),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
               showSearch(
@@ -101,12 +111,74 @@ class _getproductoState extends State<getproducto> {
                                   size: 50);
                             },
                           ),
-                          Text(
-                            product.nombre,
-                            style: const TextStyle(
-                              fontSize: 18.0,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                product.nombre,
+                                style: const TextStyle(
+                                  fontSize: 18.0,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              IconButton(
+                                icon:
+                                    const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () async {
+                                  bool confirmDelete = await showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text(
+                                          ' Confirmar para eliminar'),
+                                      content: const Text(
+                                          '¿Seguro que quieres realizar esta acción?'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.of(context).pop(false),
+                                          child: const Text('Cancelar'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.of(context).pop(true),
+                                          child: const Text('Eliminar'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+
+                                  if (confirmDelete) {
+                                    final response = await http.delete(
+                                      Uri.parse(
+                                          'http://10.0.2.2:8000/productos_eliminar'),
+                                      body: json
+                                          .encode({'codigo': product.codigo}),
+                                      headers: {
+                                        'Content-Type': 'application/json'
+                                      },
+                                    );
+                                    if (response.statusCode == 200) {
+                                      setState(() {
+                                        productos.removeAt(index);
+                                      });
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                            content:
+                                                Text('Producto eliminado')),
+                                      );
+                                    } else {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                            content: Text(
+                                                'Error al eliminar el producto')),
+                                      );
+                                    }
+                                  }
+                                },
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 8.0),
                           Text(

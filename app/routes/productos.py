@@ -1,3 +1,4 @@
+import base64
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional
@@ -10,7 +11,6 @@ router = APIRouter()
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  
 UPLOADS_PATH = os.path.join(BASE_DIR, "uploads", "images")  
-# DEFAULT_IMG = "/uploads/images/DEFAULT.png"
 IMG_EXTENSIONS = ["jpg", "jpeg", "png", "webp"]  
 
 class Producto(BaseModel):
@@ -20,15 +20,41 @@ class Producto(BaseModel):
     cantidad: Optional[int] = None
     precio: Optional[float] = None
     impuesto: Optional[float] = None
-     
+    imagen_base64: Optional[str] = None  # Se agregará la imagen en base64
+
+def GuardarImagen(codigo: str, imagen_base64: str):
+    try:
+        # Decodificar la imagen base64
+        imagen_data = base64.b64decode(imagen_base64)
+        
+        file_extension = "png"  # Por defecto, usa PNG (ajustable según necesidad)
+
+        # Eliminar imágenes del mismo código
+        posibles_imagenes = glob.glob(os.path.join(UPLOADS_PATH, f"{codigo}.*"))
+        for imagen_path in posibles_imagenes:
+            if os.path.exists(imagen_path):
+                os.remove(imagen_path)
+
+        # Guardar la nueva imagen
+        file_path = os.path.join(UPLOADS_PATH, f"{codigo}.{file_extension}")
+        with open(file_path, "wb") as buffer:
+            buffer.write(imagen_data)
+
+        return file_path
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error al guardar la imagen: {str(e)}")
+
 @router.post("/productos_post")
 def crear_producto(producto: Producto, db=Depends(obtener_db)):
- 
     cursor = db.cursor()
 
     try:
         query = "INSERT INTO productos (codigo, nombre, descripcion, cantidad, precio, impuesto) VALUES (%s, %s, %s, %s, %s, %s)"
         cursor.execute(query, (producto.codigo, producto.nombre, producto.descripcion, producto.cantidad, producto.precio, producto.impuesto))
+
+        # Guardar la imagen si se proporciona en Base64
+        if producto.imagen_base64:
+            GuardarImagen(producto.codigo, producto.imagen_base64)
 
         db.commit()
         return {"mensaje": "Producto creado"}
@@ -41,7 +67,7 @@ def crear_producto(producto: Producto, db=Depends(obtener_db)):
         cursor.close()
         db.close()
         
-@router.post("/productos_eliminar")
+@router.delete("/productos_eliminar")
 def eliminar_products(producto: Producto, db=Depends(obtener_db)):
     cursor = db.cursor()
 
@@ -49,6 +75,11 @@ def eliminar_products(producto: Producto, db=Depends(obtener_db)):
         query = "DELETE FROM productos WHERE codigo = %s"
         cursor.execute(query, (producto.codigo,))
         
+        posibles_imagenes = glob.glob(os.path.join(UPLOADS_PATH, f"{producto.codigo}.*"))
+        for imagen_path in posibles_imagenes:
+            if os.path.exists(imagen_path):
+                os.remove(imagen_path)
+                
         db.commit()
         return {"mensaje": "Producto eliminado"}
 
@@ -99,6 +130,10 @@ def actualizar_producto(producto: Producto, db=Depends(obtener_db)):
         query = "UPDATE productos SET nombre = %s, descripcion = %s, cantidad = %s, precio = %s, impuesto = %s WHERE codigo = %s"
         cursor.execute(query, (producto.nombre, producto.descripcion, producto.cantidad, producto.precio, producto.impuesto, producto.codigo))
 
+        # Subir la nueva imagen 
+        if producto.imagen_base64:
+            GuardarImagen(producto.codigo, producto.imagen_base64)
+
         db.commit()
         return {"mensaje": "Producto actualizado"}
 
@@ -109,4 +144,3 @@ def actualizar_producto(producto: Producto, db=Depends(obtener_db)):
     finally:
         cursor.close()
         db.close()
-        

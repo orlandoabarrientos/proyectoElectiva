@@ -44,7 +44,7 @@ def GuardarImagen(codigo: str, imagen_base64: str):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error al guardar la imagen: {str(e)}")
 
-@router.post("/productos_post")
+@router.post("/product_create")
 def crear_producto(producto: Producto, db=Depends(obtener_db)):
     cursor = db.cursor()
 
@@ -67,8 +67,8 @@ def crear_producto(producto: Producto, db=Depends(obtener_db)):
         cursor.close()
         db.close()
         
-@router.delete("/productos_eliminar")
-def eliminar_products(producto: Producto, db=Depends(obtener_db)):
+@router.delete("/product_delete")
+def eliminar_producto(producto: Producto, db=Depends(obtener_db)):
     cursor = db.cursor()
 
     try:
@@ -93,8 +93,8 @@ def eliminar_products(producto: Producto, db=Depends(obtener_db)):
 
 # GET = obtiene los productos de la base de datos y asigna un URL a la imagen 
 #       de cada producto (si existe un producto con esa imagen)
-@router.get("/productos_get")
-def obtener_productos(db=Depends(obtener_db)):
+@router.get("/product_read")
+def obtener_producto(db=Depends(obtener_db)):
     cursor = db.cursor(dictionary=True)
 
     try:
@@ -111,7 +111,7 @@ def obtener_productos(db=Depends(obtener_db)):
                     imagen_path = posibles_imagenes[0] 
                     imagen_path = os.path.relpath(imagen_path, BASE_DIR)  
                     imagen_path = imagen_path.replace("\\", "/")  
-                    producto["imagen_url"] = f"/{imagen_path}" #if imagen_path else DEFAULT_IMG
+                    producto["imagen_url"] = f"/{imagen_path}"
 
         return productos
 
@@ -122,7 +122,7 @@ def obtener_productos(db=Depends(obtener_db)):
         cursor.close()
         db.close()
 
-@router.post("/productos_actualizar")
+@router.put("/product_update")
 def actualizar_producto(producto: Producto, db=Depends(obtener_db)):
     cursor = db.cursor()
 
@@ -130,7 +130,6 @@ def actualizar_producto(producto: Producto, db=Depends(obtener_db)):
         query = "UPDATE productos SET nombre = %s, descripcion = %s, cantidad = %s, precio = %s, impuesto = %s WHERE codigo = %s"
         cursor.execute(query, (producto.nombre, producto.descripcion, producto.cantidad, producto.precio, producto.impuesto, producto.codigo))
 
-        # Subir la nueva imagen 
         if producto.imagen_base64:
             GuardarImagen(producto.codigo, producto.imagen_base64)
 

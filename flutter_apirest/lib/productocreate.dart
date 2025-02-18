@@ -51,19 +51,28 @@ class _ProductoPostState extends State<ProductoPost> {
       };
 
       var response = await http.post(
-        Uri.parse(
-            'http://10.0.2.2:8000/productos_post'), // Asegúrate de usar la IP correcta
+        Uri.parse('http://10.0.2.2:8000/product_create'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(productData),
       );
 
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Producto agregado con éxito')),
+          SnackBar(
+            content: Text('Producto agregado con éxito'),
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.only(bottom: 20.0, left: 20.0, right: 20.0),
+          ),
         );
+        await Future.delayed(Duration(seconds: 2)); // Espera 2 segundos
+        Navigator.pop(context); // Vuelve a la ventana anterior
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al agregar el producto')),
+          SnackBar(
+            content: Text('Error al agregar el producto'),
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.only(bottom: 20.0, left: 20.0, right: 20.0),
+          ),
         );
       }
     }
